@@ -1,0 +1,23 @@
+nav {
+    background-color: #267b7b;
+    width: 95%;
+    margin: 6px auto;
+    display: flex;
+    justify-content: space-between;
+    color: #fff;
+}
+
+.align-right {
+    display: flex;
+    align-items: center;
+}
+
+nav  .mat-button {
+    font-weight: bold;
+    font-size: 1.3rem;
+}
+
+.avatar {
+    background: url("https://via.placeholder.com/56x56") no-repeat center center;
+    margin-left: 1rem;
+}

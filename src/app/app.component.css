@@ -1,0 +1,8 @@
+.header-fixed {
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    background-color: #267b7b;
+}
