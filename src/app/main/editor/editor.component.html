@@ -1,3 +1,5 @@
-<p>
-  editor works!
-</p>
+<div class="editor">
+  <form #submitForm="ngForm">
+    <textarea #codeinput [(ngModel)]="solution" (ngModelChange)="editCode()" name="name"></textarea>
+  </form>
+</div>

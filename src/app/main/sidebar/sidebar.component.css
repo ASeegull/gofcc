@@ -18,7 +18,11 @@ hr {
     margin: 1rem 0;
 }
 
-.task-description p, .links li {
+p {
+    margin: 1.5rem 0.5rem;
+}
+
+.links li {
     margin: 1.5rem 0;
 }
 

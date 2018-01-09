@@ -1,6 +1,8 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
 
@@ -12,6 +14,7 @@ import { SidebarComponent } from './main/sidebar/sidebar.component';
 import { Ch1Component } from './views/basic/ch1/ch1.component';
 import { Ch2Component } from './views/basic/ch2/ch2.component';
 import { EditorComponent } from './main/editor/editor.component';
+import { MainService } from './services/main.service';
 
 
 @NgModule({
@@ -27,9 +30,13 @@ import { EditorComponent } from './main/editor/editor.component';
     BrowserModule,
     BrowserAnimationsModule,
     MatButtonModule,
-    AppRoutingModule
+    HttpClientModule,
+    AppRoutingModule,
+    FormsModule
   ],
-  providers: [],
+  providers: [
+    MainService
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

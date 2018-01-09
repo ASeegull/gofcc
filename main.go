@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -8,6 +9,10 @@ import (
 )
 
 const static = "dist"
+
+const (
+	POST = http.MethodPost
+)
 
 func main() {
 	r := newRouter(static)
@@ -19,5 +24,25 @@ func newRouter(staticPath string) *mux.Router {
 	staticDir := http.FileServer(http.Dir(staticPath))
 	r.Handle("/", staticDir)
 	r.PathPrefix("/{_:.*}").Handler(staticDir)
+	r.HandleFunc("/fmt", goFmt).Methods(POST)
+	r.HandleFunc("/runtests", runTests).Methods(POST)
 	return r
+}
+
+func goFmt(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Error(err)
+	}
+	defer r.Body.Close()
+	log.Info(string(body))
+}
+
+func runTests(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Error(err)
+	}
+	defer r.Body.Close()
+	log.Info(string(body))
 }

@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { MainService } from '../../services/main.service';
 
 @Component({
   selector: 'app-editor',
@@ -6,10 +7,16 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./editor.component.css']
 })
 export class EditorComponent implements OnInit {
+  initialcode: string;
+  solution: string;
 
-  constructor() { }
+  constructor(public mainService: MainService) { }
 
   ngOnInit() {
+  }
+
+  editCode() {
+    this.mainService.updateCode(this.solution);
   }
 
 }
