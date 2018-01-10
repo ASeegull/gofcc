@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs/Subject';
+import { environment  as env } from '../../environments/environment';
 
 @Injectable()
 export class MainService {
@@ -18,12 +19,14 @@ export class MainService {
 
   runTests(code: string) {
     return this.http
-      .post('localhost:4000/runtests', code, { observe: 'response' }).subscribe(data => console.log(data), err => console.log(err));
+      .post( env.apiURL + 'runtests', code, { observe: 'response' })
+      .subscribe(data => console.log(data), err => console.log(err));
   }
 
   fmt(code: string) {
     return this.http
-      .post('localhost:4000/fmt', code, { observe: 'response' }).subscribe(data => console.log(data), err => console.log(err));
+      .post( env.apiURL + '/fmt', code, { observe: 'response' })
+      .subscribe(data => console.log(data), err => console.log(err));
   }
 
 }
