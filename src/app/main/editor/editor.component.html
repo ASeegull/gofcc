@@ -1,5 +1,4 @@
-<div class="editor">
-  <form #submitForm="ngForm">
-    <textarea #codeinput [(ngModel)]="solution" (ngModelChange)="editCode()" name="name"></textarea>
+  <form class="editor" #submitForm="ngForm" (click)="focus()">
+    <textarea #codeinput autofocus="" [(ngModel)]="solution" (ngModelChange)="editCode()" name="name"></textarea>
+    <pre>{{ solution }}</pre>
   </form>
-</div>

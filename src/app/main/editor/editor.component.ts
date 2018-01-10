@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { MainService } from '../../services/main.service';
 
 @Component({
@@ -6,13 +6,15 @@ import { MainService } from '../../services/main.service';
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css']
 })
-export class EditorComponent implements OnInit {
+export class EditorComponent {
   initialcode: string;
   solution: string;
+  @ViewChild('codeinput') public codeinput: ElementRef;
 
   constructor(public mainService: MainService) { }
 
-  ngOnInit() {
+  public focus(): void {
+    this.codeinput.nativeElement.focus();
   }
 
   editCode() {

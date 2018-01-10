@@ -18,6 +18,7 @@ export class MainService {
   }
 
   runTests(code: string) {
+    console.log(code);
     return this.http
       .post( env.apiURL + 'runtests', code, { observe: 'response' })
       .subscribe(data => console.log(data), err => console.log(err));
@@ -25,7 +26,7 @@ export class MainService {
 
   fmt(code: string) {
     return this.http
-      .post( env.apiURL + '/fmt', code, { observe: 'response' })
+      .post( env.apiURL + 'fmt', code, { observe: 'response' })
       .subscribe(data => console.log(data), err => console.log(err));
   }
 

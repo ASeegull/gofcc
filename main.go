@@ -3,6 +3,7 @@ package main
 import (
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -35,9 +36,9 @@ func newRouter(staticPath string) *mux.Router {
 	r := mux.NewRouter()
 	staticDir := http.FileServer(http.Dir(staticPath))
 	r.Handle("/", staticDir)
-	// r.PathPrefix("/{_:.*}").Handler(staticDir)
 	r.Path("/fmt").HandlerFunc(goFmt).Methods(POST)
 	r.Path("/runtests").HandlerFunc(runTests).Methods(POST)
+	r.Handle("/{_:.*}", staticDir)
 	return r
 }
 
@@ -59,4 +60,21 @@ func runTests(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 	log.Info(string(body))
+	writeSolution(body)
+}
+
+func writeSolution(usercode []byte) {
+	solutionFile, err := os.OpenFile("challenges/basic/solution.go", os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer solutionFile.Close()
+
+	n, err := solutionFile.Write(usercode)
+	if err != nil || n != len(usercode) {
+		log.Errorf("Failed to solution write to file: %s", err)
+	}
+	if err := solutionFile.Close(); err != nil {
+		log.Fatal(err)
+	}
 }
