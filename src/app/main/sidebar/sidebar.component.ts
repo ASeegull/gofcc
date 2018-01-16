@@ -14,7 +14,7 @@ export class SidebarComponent implements OnInit {
   }
 
   run() {
-    this.mainService.runTests(this.mainService.solution);
+    this.mainService.runTests(`TestReverseString`, this.mainService.solution);
   }
 
   format() {

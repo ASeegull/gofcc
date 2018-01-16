@@ -4,6 +4,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
+	"regexp"
+	"strings"
+	"sync"
+
+	"github.com/pkg/errors"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -37,7 +43,7 @@ func newRouter(staticPath string) *mux.Router {
 	staticDir := http.FileServer(http.Dir(staticPath))
 	r.Handle("/", staticDir)
 	r.Path("/fmt").HandlerFunc(goFmt).Methods(POST)
-	r.Path("/runtests").HandlerFunc(runTests).Methods(POST)
+	r.Path("/runtests/{testname}").HandlerFunc(runTests).Methods(POST)
 	r.Handle("/{_:.*}", staticDir)
 	return r
 }
@@ -53,6 +59,7 @@ func goFmt(w http.ResponseWriter, r *http.Request) {
 }
 
 func runTests(w http.ResponseWriter, r *http.Request) {
+	name := mux.Vars(r)["testname"]
 	log.Info("request for running tests is made")
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -60,21 +67,92 @@ func runTests(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 	log.Info(string(body))
-	writeSolution(body)
+	filepath := "challenges/basic/solution.go"
+	if err = writeSolution(body, filepath); err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("%+v", execTest(name))
 }
 
-func writeSolution(usercode []byte) {
-	solutionFile, err := os.OpenFile("challenges/basic/solution.go", os.O_RDWR|os.O_CREATE, 0755)
+func writeSolution(usercode []byte, filepath string) error {
+	solutionFile, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer solutionFile.Close()
 
 	n, err := solutionFile.Write(usercode)
 	if err != nil || n != len(usercode) {
-		log.Errorf("Failed to solution write to file: %s", err)
+		return errors.Wrapf(err, "Failed to solution write to file: %s", filepath)
 	}
-	if err := solutionFile.Close(); err != nil {
-		log.Fatal(err)
+	return nil
+}
+
+var re, _ = regexp.Compile("Expected {{(.*)}}, got {{(.*)}}")
+
+func execTest(name string) *Result {
+	prog := "go"
+	args := []string{"test", "--run", name, "challenges/basic/basic_test.go", "challenges/basic/solution.go"}
+	cmd := exec.Command(prog, args...)
+	stdoutStderr, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Error(err)
 	}
+	return parseOutput(stdoutStderr)
+}
+
+type Result struct {
+	TestsPassed bool          `json:"passed,omitempty"`
+	BuildFailed bool          `json:"buildfailed,omitempty"`
+	BuildErr    []string      `json:"errors,omitempty"`
+	FailedTests map[int]*Test `json:"failedtests,omitempty"`
+}
+
+type Test struct{ Expected, Got string }
+
+func parseOutput(output []byte) *Result {
+	result := &Result{}
+	lines, buildfailed := checkBuild(output)
+	log.Info(lines)
+	if buildfailed {
+		result.BuildFailed = true
+		result.BuildErr = lines[1 : len(lines)-1]
+		return result
+	}
+
+	if strings.Contains(lines[0], "FAIL") {
+		result.FailedTests = make(map[int]*Test)
+		log.Info("Tests failed")
+		errors := lines[1 : len(lines)-3]
+		log.Info("lines", errors)
+		var wg sync.WaitGroup
+		for i, test := range errors {
+			wg.Add(1)
+			go func(i int, t *string) {
+				result.FailedTests[i] = parseFailed(t)
+			}(i, &test)
+		}
+	}
+
+	if strings.Contains(lines[0], "PASS") {
+		result.TestsPassed = true
+	}
+
+	return result
+}
+
+func checkBuild(out []byte) ([]string, bool) {
+	output := string(out)
+	lines := strings.Split(output, "\n")
+	log.Info("Build checked")
+	return lines, strings.HasSuffix(output, "[build failed]")
+}
+
+func parseFailed(input *string) *Test {
+	match := re.FindStringSubmatch(*input)
+	log.Infof("After parsing failed test got  %v", match)
+	if len(match) < 2 {
+		return nil
+	}
+	return &Test{Expected: match[1], Got: match[2]}
 }
