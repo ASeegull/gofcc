@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MainService } from '../../services/main.service';
+import { TestResult } from '../../models/testresult';
 
 @Component({
   selector: 'app-sidebar',
@@ -7,6 +8,7 @@ import { MainService } from '../../services/main.service';
   styleUrls: ['./sidebar.component.css']
 })
 export class SidebarComponent implements OnInit {
+  results: TestResult;
 
   constructor(public mainService: MainService) { }
 
@@ -14,7 +16,8 @@ export class SidebarComponent implements OnInit {
   }
 
   run() {
-    this.mainService.runTests(`TestReverseString`, this.mainService.solution);
+    this.mainService.runTests(`TestReverseString`, this.mainService.solution)
+      .subscribe(res => { this.results = res['body']; }, err => console.log(err));
   }
 
   format() {

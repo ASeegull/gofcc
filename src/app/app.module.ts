@@ -15,6 +15,7 @@ import { Ch1Component } from './views/basic/ch1/ch1.component';
 import { Ch2Component } from './views/basic/ch2/ch2.component';
 import { EditorComponent } from './main/editor/editor.component';
 import { MainService } from './services/main.service';
+import { TestresultComponent } from './main/testresult/testresult.component';
 
 
 @NgModule({
@@ -24,7 +25,8 @@ import { MainService } from './services/main.service';
     SidebarComponent,
     Ch1Component,
     Ch2Component,
-    EditorComponent
+    EditorComponent,
+    TestresultComponent
   ],
   imports: [
     BrowserModule,

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -71,7 +72,13 @@ func runTests(w http.ResponseWriter, r *http.Request) {
 	if err = writeSolution(body, filepath); err != nil {
 		log.Fatal(err)
 	}
-	log.Infof("%+v", execTest(name))
+	res := execTest(name)
+
+	log.Infof("%+v", res)
+	if err = json.NewEncoder(w).Encode(res); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
 }
 
 func writeSolution(usercode []byte, filepath string) error {
@@ -92,7 +99,7 @@ var re, _ = regexp.Compile("Expected {{(.*)}}, got {{(.*)}}")
 
 func execTest(name string) *Result {
 	prog := "go"
-	args := []string{"test", "--run", name, "challenges/basic/basic_test.go", "challenges/basic/solution.go"}
+	args := []string{"test", "--run", name, "./challenges/basic/basic_test.go", "./challenges/basic/solution.go"}
 	cmd := exec.Command(prog, args...)
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
@@ -102,8 +109,8 @@ func execTest(name string) *Result {
 }
 
 type Result struct {
-	TestsPassed bool          `json:"passed,omitempty"`
-	BuildFailed bool          `json:"buildfailed,omitempty"`
+	TestsPassed bool          `json:"passed"`
+	BuildFailed bool          `json:"buildfailed"`
 	BuildErr    []string      `json:"errors,omitempty"`
 	FailedTests map[int]*Test `json:"failedtests,omitempty"`
 }
@@ -123,15 +130,17 @@ func parseOutput(output []byte) *Result {
 	if strings.Contains(lines[0], "FAIL") {
 		result.FailedTests = make(map[int]*Test)
 		log.Info("Tests failed")
-		errors := lines[1 : len(lines)-3]
+		errors := lines[1 : len(lines)-2]
 		log.Info("lines", errors)
 		var wg sync.WaitGroup
-		for i, test := range errors {
+		for i, e := range errors {
 			wg.Add(1)
-			go func(i int, t *string) {
+			go func(i int, t string) {
 				result.FailedTests[i] = parseFailed(t)
-			}(i, &test)
+				wg.Done()
+			}(i, e)
 		}
+		wg.Wait()
 	}
 
 	if strings.Contains(lines[0], "PASS") {
@@ -144,13 +153,11 @@ func parseOutput(output []byte) *Result {
 func checkBuild(out []byte) ([]string, bool) {
 	output := string(out)
 	lines := strings.Split(output, "\n")
-	log.Info("Build checked")
-	return lines, strings.HasSuffix(output, "[build failed]")
+	return lines[:len(lines)-1], strings.HasSuffix(output, "[build failed]")
 }
 
-func parseFailed(input *string) *Test {
-	match := re.FindStringSubmatch(*input)
-	log.Infof("After parsing failed test got  %v", match)
+func parseFailed(input string) *Test {
+	match := re.FindStringSubmatch(input)
 	if len(match) < 2 {
 		return nil
 	}
